@@ -1,6 +1,7 @@
 package carrillo.uriel.myfirstdatabase;
 
 import android.app.Activity;
+import android.support.v7.app.ActionBarActivity;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.app.ActionBar;
 import android.support.v4.app.Fragment;
@@ -16,10 +17,16 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.support.v4.widget.DrawerLayout;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.ListView;
+import android.widget.Spinner;
 import android.widget.TextView;
 
-public class MainActivity extends AppCompatActivity
-        implements NavigationDrawerFragment.NavigationDrawerCallbacks {
+import java.util.ArrayList;
+
+public class MainActivity extends ActionBarActivity
+        implements NavigationDrawerFragment.NavigationDrawerCallbacks,View.OnClickListener {
 
     /**
      * Fragment managing the behaviors, interactions and presentation of the navigation drawer.
@@ -29,30 +36,67 @@ public class MainActivity extends AppCompatActivity
     /**
      * Used to store the last screen title. For use in {@link #restoreActionBar()}.
      */
-    private CharSequence mTitle;
+    public CharSequence mTitle;
+    public MyDBAdapter dbAdapter;
+    public ListView list;
+    public Spinner faculties;
+    public Button addStudent;
+    public Button deleteEngineers;
+    public EditText studentName;
+    public String[] allFaculties = {"Engineering","Business","Arts"};
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        mNavigationDrawerFragment = (NavigationDrawerFragment)
+       /* mNavigationDrawerFragment = (NavigationDrawerFragment)
                 getSupportFragmentManager().findFragmentById(R.id.navigation_drawer);
         mTitle = getTitle();
 
         // Set up the drawer.
         mNavigationDrawerFragment.setUp(
                 R.id.navigation_drawer,
-                (DrawerLayout) findViewById(R.id.drawer_layout));
+                (DrawerLayout) findViewById(R.id.drawer_layout));*/
+
+        faculties =(Spinner) findViewById(R.id.faculties_spinner);
+        studentName=(EditText)findViewById(R.id.student_name);
+        addStudent = (Button) findViewById(R.id.add_student);
+        deleteEngineers=(Button)findViewById(R.id.delete_engineers);
+        list=(ListView)findViewById(R.id.student_list);
+
+        dbAdapter=new MyDBAdapter(MainActivity.this);
+        dbAdapter.open();
+
+        addStudent.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View v){
+                dbAdapter.insertStudent(studentName.getText().toString(),faculties.getSelectedItemPosition() +1);
+                loadList();
+            }
+        });
+        deleteEngineers.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                dbAdapter.deleteAllEngineers();
+                loadList();
+            }
+        });
+
+        faculties.setAdapter(new ArrayAdapter<String>(MainActivity.this, android.R.layout.simple_list_item_1, allFaculties));
+        loadList();
+
+
     }
 
     @Override
     public void onNavigationDrawerItemSelected(int position) {
         // update the main content by replacing fragments
-        FragmentManager fragmentManager = getSupportFragmentManager();
+        /*FragmentManager fragmentManager = getSupportFragmentManager();
         fragmentManager.beginTransaction()
                 .replace(R.id.container, PlaceholderFragment.newInstance(position + 1))
-                .commit();
+                .commit();*/
     }
 
     public void onSectionAttached(int number) {
@@ -79,7 +123,7 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        if (!mNavigationDrawerFragment.isDrawerOpen()) {
+      /*  if (!mNavigationDrawerFragment.isDrawerOpen()) {
             // Only show items in the action bar relevant to this screen
             // if the drawer is not showing. Otherwise, let the drawer
             // decide what to show in the action bar.
@@ -87,7 +131,8 @@ public class MainActivity extends AppCompatActivity
             restoreActionBar();
             return true;
         }
-        return super.onCreateOptionsMenu(menu);
+        return super.onCreateOptionsMenu(menu);*/
+        return  true;
     }
 
     @Override
@@ -142,6 +187,30 @@ public class MainActivity extends AppCompatActivity
             super.onAttach(activity);
             ((MainActivity) activity).onSectionAttached(
                     getArguments().getInt(ARG_SECTION_NUMBER));
+        }
+    }
+
+    private void loadList()
+    {
+        ArrayList<String> allStudents = new ArrayList<String>();
+        allStudents = dbAdapter.selectAllStudents();
+
+        final ArrayAdapter<String> adapter = new ArrayAdapter<String>(MainActivity.this,android.R.layout.simple_list_item_1,allStudents);
+        list.setAdapter(adapter);
+    }
+
+    @Override
+    public void onClick(View v){
+        switch(v.getId())
+        {
+            case R.id.add_student:
+                dbAdapter.insertStudent(studentName.getText().toString(), faculties.getSelectedItemPosition() + 1);
+                loadList();
+                break;
+            case R.id.delete_engineers:
+                dbAdapter.deleteAllEngineers();
+                loadList();
+                break;
         }
     }
 
